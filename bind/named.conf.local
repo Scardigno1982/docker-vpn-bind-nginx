@@ -1,0 +1,11 @@
+zone "hosting-laplata.xyz" {
+    type master;
+    file "/etc/bind/zones/db.hosting-laplata.xyz";
+    allow-query { any; };
+};
+
+zone "hosting-laplata.com.ar" {
+    type master;
+    file "/etc/bind/zones/db.hosting-laplata.com.ar";
+    allow-query { any; };
+};

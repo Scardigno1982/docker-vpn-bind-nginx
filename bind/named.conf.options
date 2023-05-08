@@ -1,0 +1,10 @@
+options {
+    directory "/var/cache/bind";
+    recursion yes;
+    allow-query { any; };
+    allow-recursion { any; };
+    forwarders {
+        8.8.8.8; // Google Public DNS 1
+        8.8.4.4; // Google Public DNS 2
+    };
+};

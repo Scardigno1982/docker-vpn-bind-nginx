@@ -1,0 +1,23 @@
+$TTL    86400
+@       IN      SOA     hosting-laplata.xyz. root.hosting-laplata.xyz. (
+                              1         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                          86400 )       ; Negative Cache TTL
+
+; Name servers
+@       IN      NS      ns2.hosting-laplata.xyz.
+@       IN      NS      ns1.hosting-laplata.xyz.
+
+; A records for name servers
+ns1     IN      A       191.101.14.79
+ns2     IN      A       191.101.14.79
+
+; A record for the main domain
+@       IN      A       191.101.14.79
+
+; Additional records (if needed)
+www     IN      CNAME   hosting-laplata.xyz.
+
+
