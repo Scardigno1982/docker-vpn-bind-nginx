@@ -5,32 +5,42 @@ services:
     container_name: dns
     image: ubuntu/bind9:latest
     environment:
-    - BIND9_USER=root
+      - BIND9_USER=root
     ports:
-    - "53:53/tcp"
-    - "53:53/udp"
+      - "53:53/tcp"
+      - "53:53/udp"
     volumes:
-    - ./bind:/etc/bind
+      - ./bind:/etc/bind
     restart: unless-stopped
 
-  nginx:
-    image: nginx:latest
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./html/hosting-laplata.com.ar:/usr/share/nginx/hosting-laplata.com.ar
-      - ./html/hosting-laplata.xyz:/usr/share/nginx/hosting-laplata.xyz
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - ./vhost.d:/etc/nginx/vhost.d
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./certs:/etc/nginx/certs:ro
+    restart: unless-stopped
+
+  letsencrypt-nginx-proxy-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: nginx-proxy-le
+    volumes:
+      - ./certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
     depends_on:
-      - php
-      - node
+      - nginx-proxy
 
   php:
     image: php:8.0-fpm
     volumes:
-      - ./html/hosting-laplata.com.ar:/usr/share/nginx/hosting-laplata.com.ar
-      - ./html/hosting-laplata.xyz:/usr/share/nginx/hosting-laplata.xyz
+      - ./html/hosting-laplata.com.ar:/var/www/html/hosting-laplata.com.ar
+      - ./html/hosting-laplata.xyz:/var/www/html/hosting-laplata.xyz
     restart: unless-stopped
 
   node:
@@ -38,8 +48,33 @@ services:
     volumes:
       - ./nodejs/:/usr/src/app
     working_dir: /usr/src/app
-    command: sh -c "npm install && npm run build && npm start"
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
+    command: sh -c "npm install && npm run build && npm run start"
+    restart: no
 
+  app1:
+    image: nginx:latest
+    volumes:
+      - ./nodejs/out:/usr/share/nginx/html
+    environment:
+      - VIRTUAL_HOST=hosting-laplata.com.ar
+      - LETSENCRYPT_HOST=hosting-laplata.com.ar
+      - LETSENCRYPT_EMAIL=sergioscardigno@gmail.com
+    expose:
+      - "80"
+    depends_on:
+      - php
+      - node
+
+  app2:
+    image: nginx:latest
+    volumes:
+      - ./html/hosting-laplata.xyz:/usr/share/nginx/html
+    environment:
+      - VIRTUAL_HOST=hosting-laplata.xyz
+      - LETSENCRYPT_HOST=hosting-laplata.xyz
+      - LETSENCRYPT_EMAIL=sergioscardigno@gmail.com
+    expose:
+      - "80"
+    depends_on:
+      - php
+      - node
